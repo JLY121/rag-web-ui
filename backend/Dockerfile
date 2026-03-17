@@ -5,7 +5,7 @@ WORKDIR /app
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
   build-essential \
-  default-libmysqlclient-dev \
+  default-libmysqlclient-dev \ 
   pkg-config \
   netcat-traditional \
   curl \
@@ -22,7 +22,8 @@ COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
 
 # Copy application files
-COPY . .
+# 将当前目录下（backend）的所有文件复制到工作目录下（/app）
+COPY . .  
 
 # Create uploads directory
 RUN mkdir -p uploads
@@ -32,4 +33,5 @@ ENV PYTHONPATH=/app
 ENV ENVIRONMENT=production
 
 # Run the application
+# 调用main启动函数的位置，用uvicorn启动fastapi应用
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

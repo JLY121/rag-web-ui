@@ -10,6 +10,11 @@ from app.core.security import get_api_key_user
 from app.core.config import settings
 from app.services.embedding.embedding_factory import EmbeddingsFactory
 
+'''
+    这个文件实现纯检索的API，不通过LLM生成回答。
+'''
+
+
 router = APIRouter()
 
 @router.get("/{knowledge_base_id}/query")

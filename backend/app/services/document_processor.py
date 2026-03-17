@@ -3,6 +3,7 @@ import os
 import hashlib
 import tempfile
 import traceback
+import re
 from datetime import datetime
 from app.db.session import SessionLocal
 from io import BytesIO
@@ -14,7 +15,7 @@ from langchain_community.document_loaders import (
     UnstructuredMarkdownLoader,
     TextLoader
 )
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.text_splitter import RecursiveCharacterTextSplitter  # 文本分块器，LangChain提供的功能
 from langchain_core.documents import Document as LangchainDocument
 from pydantic import BaseModel
 from sqlalchemy import create_engine, text
@@ -32,7 +33,25 @@ from minio.commonconfig import CopySource
 from app.services.vector_store import VectorStoreFactory
 from app.services.embedding.embedding_factory import EmbeddingsFactory
 
-class UploadResult(BaseModel):
+SURROGATE_RE = re.compile(r"[\ud800-\udfff]")
+
+# =========新增数据清理函数，解决PDF上传后会出现的编码错误
+def sanitize_surrogates(text: str) -> str:
+    """Remove invalid Unicode surrogate characters to avoid UTF-8 encode errors."""
+    if not isinstance(text, str):
+        return text
+    return SURROGATE_RE.sub("", text)
+
+# ==========新增分批写入向量数据库函数，解决大文件上传时的chunks超出限制的问题
+def add_documents_in_batches(vector_store, documents, batch_size: int) -> None:
+    """Add documents to vector store in batches."""
+    if not documents:
+        return
+    batch_size = max(1, batch_size)
+    for i in range(0, len(documents), batch_size):
+        vector_store.add_documents(documents[i:i + batch_size])
+
+class UploadResult(BaseModel): # 用Pydantic定义上传结果的返回格式
     file_path: str
     file_name: str
     file_size: int
@@ -49,6 +68,7 @@ class PreviewResult(BaseModel):
 
 async def process_document(file_path: str, file_name: str, kb_id: int, document_id: int, chunk_size: int = 1000, chunk_overlap: int = 200) -> None:
     """Process document and store in vector database with incremental updates"""
+    # =======实现了增量更新。文档有更新时，只更新变化的chunk，而不是重新生成所有chunk。
     logger = logging.getLogger(__name__)
     
     try:
@@ -56,17 +76,20 @@ async def process_document(file_path: str, file_name: str, kb_id: int, document_
         
         # Initialize embeddings
         logger.info("Initializing OpenAI embeddings...")
+        # 创建 embeddings 模型
         embeddings = EmbeddingsFactory.create()
         
         logger.info(f"Initializing vector store with collection: kb_{kb_id}")
+
+        # 创建 vector store 实例（Chroma 或 Qdrant），也是用工厂模式来方便切换不同的向量数据库
         vector_store = VectorStoreFactory.create(
             store_type=settings.VECTOR_STORE_TYPE,
-            collection_name=f"kb_{kb_id}",
+            collection_name=f"kb_{kb_id}",  # 为每个知识库创建一个独立的 collection，后续检索时使用
             embedding_function=embeddings,
         )
         
         # Initialize chunk record manager
-        chunk_manager = ChunkRecord(kb_id)
+        chunk_manager = ChunkRecord(kb_id) # 用MySQL做chunk级别的记录管理，方便后续的增量更新
         
         # Get existing chunk hashes for this file
         existing_hashes = chunk_manager.list_chunks(file_name)
@@ -78,13 +101,14 @@ async def process_document(file_path: str, file_name: str, kb_id: int, document_
         
         for chunk in preview_result.chunks:
             # Calculate chunk hash
-            chunk_hash = hashlib.sha256(
-                (chunk.content + str(chunk.metadata)).encode()
+            chunk_content = sanitize_surrogates(chunk.content)
+            chunk_hash = hashlib.sha256(   
+                (chunk_content + str(chunk.metadata)).encode("utf-8")
             ).hexdigest()
             current_hashes.add(chunk_hash)
             
-            # Skip if chunk hasn't changed
-            if chunk_hash in existing_hashes:
+            # Skip if chunk hasn't changed 哈希一致则表示没有修改，直接跳过
+            if chunk_hash in existing_hashes:  
                 continue
             
             # Create unique ID for the chunk
@@ -112,8 +136,9 @@ async def process_document(file_path: str, file_name: str, kb_id: int, document_
             })
             
             # Prepare document for vector store
+            # 将 chunk 转换为 Langchain 的 Document 对象
             doc = LangchainDocument(
-                page_content=chunk.content,
+                page_content=chunk_content,
                 metadata=metadata
             )
             documents_to_update.append(doc)
@@ -122,7 +147,11 @@ async def process_document(file_path: str, file_name: str, kb_id: int, document_
         if new_chunks:
             logger.info(f"Adding {len(new_chunks)} new/updated chunks")
             chunk_manager.add_chunks(new_chunks)
-            vector_store.add_documents(documents_to_update)
+            add_documents_in_batches(
+                vector_store,
+                documents_to_update,
+                settings.EMBEDDINGS_BATCH_SIZE
+            )  # 将新的 chunks 分批写入向量数据库
         
         # Delete removed chunks
         chunks_to_delete = chunk_manager.get_deleted_chunks(current_hashes, file_name)
@@ -137,6 +166,7 @@ async def process_document(file_path: str, file_name: str, kb_id: int, document_
         logger.error(f"Error processing document: {str(e)}")
         raise
 
+# 上传原始文件到MinIO对象数据库
 async def upload_document(file: UploadFile, kb_id: int) -> UploadResult:
     """Step 1: Upload document to MinIO"""
     content = await file.read()
@@ -180,6 +210,7 @@ async def upload_document(file: UploadFile, kb_id: int) -> UploadResult:
         file_hash=file_hash
     )
 
+# 
 async def preview_document(file_path: str, chunk_size: int = 1000, chunk_overlap: int = 200) -> PreviewResult:
     """Step 2: Generate preview chunks"""
     # Get file from MinIO
@@ -187,7 +218,7 @@ async def preview_document(file_path: str, chunk_size: int = 1000, chunk_overlap
     _, ext = os.path.splitext(file_path)
     ext = ext.lower()
     
-    # Download to temp file
+    # Download to temp file  临时文件的形式
     with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as temp_file:
         minio_client.fget_object(
             bucket_name=settings.MINIO_BUCKET_NAME,
@@ -197,7 +228,7 @@ async def preview_document(file_path: str, chunk_size: int = 1000, chunk_overlap
         temp_path = temp_file.name
     
     try:
-        # Select appropriate loader
+        # Select appropriate loader  动态选择合适的加载器
         if ext == ".pdf":
             loader = PyPDFLoader(temp_path)
         elif ext == ".docx":
@@ -209,7 +240,7 @@ async def preview_document(file_path: str, chunk_size: int = 1000, chunk_overlap
         
         # Load and split the document
         documents = loader.load()
-        text_splitter = RecursiveCharacterTextSplitter(
+        text_splitter = RecursiveCharacterTextSplitter( # 文本分块器，LangChain提供的功能
             chunk_size=chunk_size,
             chunk_overlap=chunk_overlap
         )
@@ -218,7 +249,7 @@ async def preview_document(file_path: str, chunk_size: int = 1000, chunk_overlap
         # Convert to preview format
         preview_chunks = [
             TextChunk(
-                content=chunk.page_content,
+                content=sanitize_surrogates(chunk.page_content),
                 metadata=chunk.metadata
             )
             for chunk in chunks
@@ -228,8 +259,8 @@ async def preview_document(file_path: str, chunk_size: int = 1000, chunk_overlap
             chunks=preview_chunks,
             total_chunks=len(chunks)
         )
-    finally:
-        os.unlink(temp_path)
+    finally:  # 删除临时文件
+        os.unlink(temp_path)  
 
 async def process_document_background(
     temp_path: str,
@@ -340,7 +371,7 @@ async def process_document_background(
                 logger.error(f"Task {task_id}: {error_msg}")
                 raise Exception(error_msg)
             
-            # 5. 创建文档记录
+            # 5. ======创建文档记录（处理文档结束，把记录写入到MySQL）=====
             logger.info(f"Task {task_id}: Creating document record")
             document = Document(
                 file_name=file_name,
@@ -358,9 +389,10 @@ async def process_document_background(
             # 6. 存储文档块
             logger.info(f"Task {task_id}: Storing document chunks")
             for i, chunk in enumerate(chunks):
+                chunk.page_content = sanitize_surrogates(chunk.page_content)
                 # 为每个 chunk 生成唯一的 ID
                 chunk_id = hashlib.sha256(
-                    f"{kb_id}:{file_name}:{chunk.page_content}".encode()
+                    f"{kb_id}:{file_name}:{chunk.page_content}".encode("utf-8")
                 ).hexdigest()
 
                 chunk.metadata["source"] = file_name
@@ -378,7 +410,7 @@ async def process_document_background(
                         **chunk.metadata
                     },
                     hash=hashlib.sha256(
-                        (chunk.page_content + str(chunk.metadata)).encode()
+                        (chunk.page_content + str(chunk.metadata)).encode("utf-8")
                     ).hexdigest()
                 )
                 db.add(doc_chunk)
@@ -388,14 +420,18 @@ async def process_document_background(
             
             # 7. 添加到向量存储
             logger.info(f"Task {task_id}: Adding chunks to vector store")
-            vector_store.add_documents(chunks)
+            add_documents_in_batches(
+                vector_store,
+                chunks,
+                settings.EMBEDDINGS_BATCH_SIZE
+            )
             # 移除 persist() 调用，因为新版本不需要
             logger.info(f"Task {task_id}: Chunks added to vector store")
             
             # 8. 更新任务状态
             logger.info(f"Task {task_id}: Updating task status to completed")
-            task.status = "completed"
-            task.document_id = document.id  # 更新为新创建的文档ID
+            task.status = "completed" # ========更新任务状态为完成
+            task.document_id = document.id  # ========更新为新创建的文档ID
             
             # 9. 更新上传记录状态
             upload = task.document_upload  # 直接通过关系获取
