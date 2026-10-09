@@ -1,6 +1,14 @@
 services:
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        HTTP_PROXY: ${HTTP_PROXY}
+        HTTPS_PROXY: ${HTTPS_PROXY}
+        NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,host.docker.internal}
+        http_proxy: ${http_proxy:-${HTTP_PROXY}}
+        https_proxy: ${https_proxy:-${HTTPS_PROXY}}
+        no_proxy: ${no_proxy:-${NO_PROXY:-localhost,127.0.0.1,host.docker.internal}}
     env_file:
       - .env
     extra_hosts:
@@ -25,7 +33,15 @@ services:
         max_attempts: 3
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        HTTP_PROXY: ${HTTP_PROXY}
+        HTTPS_PROXY: ${HTTPS_PROXY}
+        NO_PROXY: ${NO_PROXY:-localhost,127.0.0.1,host.docker.internal}
+        http_proxy: ${http_proxy:-${HTTP_PROXY}}
+        https_proxy: ${https_proxy:-${HTTPS_PROXY}}
+        no_proxy: ${no_proxy:-${NO_PROXY:-localhost,127.0.0.1,host.docker.internal}}
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -89,8 +105,8 @@ services:
   minio:
     image: minio/minio:latest
     ports:
-      - "9000:9000" # API port
-      - "9001:9001" # Console port
+      - "19000:9000" # API port
+      - "19001:9001" # Console port
     environment:
       - MINIO_ROOT_USER=minioadmin
       - MINIO_ROOT_PASSWORD=minioadmin
