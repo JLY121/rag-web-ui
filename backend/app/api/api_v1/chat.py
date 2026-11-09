@@ -18,10 +18,11 @@ from app.services.chat_service import generate_response
 
 router = APIRouter()
 
+# 创建一个新对话（对应前端新建对话的请求）
 @router.post("/", response_model=ChatResponse)
 def create_chat(
     *,
-    db: Session = Depends(get_db),
+    db: Session = Depends(get_db), 
     chat_in: ChatCreate,
     current_user: User = Depends(get_current_user)
 ) -> Any:
@@ -44,19 +45,20 @@ def create_chat(
         title=chat_in.title,
         user_id=current_user.id,
     )
-    chat.knowledge_bases = knowledge_bases
+    chat.knowledge_bases = knowledge_bases # 将查找到的知识库关联到对话中
     
     db.add(chat)
     db.commit()
     db.refresh(chat)
     return chat
 
+# 获取用户对应的所有对话
 @router.get("/", response_model=List[ChatResponse])
 def get_chats(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
-    skip: int = 0,
-    limit: int = 100
+    skip: int = 0, # 分页参数，跳过前 skip 条记录，从第 skip+1 条开始获取
+    limit: int = 100 # 分页参数，每页获取 limit 条记录
 ) -> Any:
     chats = (
         db.query(Chat)
@@ -67,6 +69,7 @@ def get_chats(
     )
     return chats
 
+# 获取指定单个对话详情
 @router.get("/{chat_id}", response_model=ChatResponse)
 def get_chat(
     *,
@@ -86,6 +89,7 @@ def get_chat(
         raise HTTPException(status_code=404, detail="Chat not found")
     return chat
 
+# 发送消息并获取流式响应
 @router.post("/{chat_id}/messages")
 async def create_message(
     *,
@@ -115,12 +119,12 @@ async def create_message(
     knowledge_base_ids = [kb.id for kb in chat.knowledge_bases]
 
     async def response_stream():
-        async for chunk in generate_response(
+        async for chunk in generate_response(  # ======调用 generate_response 生成响应
             query=last_message["content"],
             messages=messages,
             knowledge_base_ids=knowledge_base_ids,
             chat_id=chat_id,
-            db=db
+            db=db   # 把 db 交给 generate_response 使用
         ):
             yield chunk
 

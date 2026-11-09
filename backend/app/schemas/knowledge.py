@@ -79,6 +79,7 @@ class KnowledgeBaseResponse(KnowledgeBaseBase):
     class Config:
         from_attributes = True
 
+# 分块预览时的请求参数
 class PreviewRequest(BaseModel):
     document_ids: List[int]
     chunk_size: int = 1000

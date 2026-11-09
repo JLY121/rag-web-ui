@@ -9,6 +9,7 @@ while ! nc -z db 3306; do
 done
 echo "MySQL started"
 
+# 自动执行数据库迁移
 echo "Running migrations..."
 if alembic upgrade head; then
   echo "Migrations completed successfully"
@@ -19,6 +20,7 @@ fi
 
 echo "Starting application..."
 if [ "$ENVIRONMENT" = "development" ]; then
+  # 开发环境使用reload模式，热重载
   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 else
   uvicorn app.main:app --host 0.0.0.0 --port 8000

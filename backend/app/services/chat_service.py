@@ -10,7 +10,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from app.core.config import settings
 from app.models.chat import Message
 from app.models.knowledge import KnowledgeBase, Document
-from langchain.globals import set_verbose, set_debug
+from langchain.globals import set_verbose, set_debug # 全局控制 LangChain 应用程序的日志输出和调试信息的详细程度
 from app.services.vector_store import VectorStoreFactory
 from app.services.embedding.embedding_factory import EmbeddingsFactory
 from app.services.llm.llm_factory import LLMFactory
@@ -36,7 +36,7 @@ async def generate_response(
         db.commit()
         
         # Create bot message placeholder
-        bot_message = Message(
+        bot_message = Message( # 先占位，后更新。即使对话失败，对话记录依旧存在
             content="",
             role="assistant",
             chat_id=chat_id
@@ -45,6 +45,7 @@ async def generate_response(
         db.commit()
         
         # Get knowledge bases and their documents
+        # 查出本 chat 关联的 knowledge base（MySQL）
         knowledge_bases = (
             db.query(KnowledgeBase)
             .filter(KnowledgeBase.id.in_(knowledge_base_ids))
@@ -52,6 +53,10 @@ async def generate_response(
         )
         
         # Initialize embeddings
+        '''
+            从这里到llm实例化部分，是FastAPI调用RAG服务的真正入口点。
+            用EmbeddingsFactory、VectorStoreFactory、LLMFactory实现了工厂模式形式的初始化
+        '''
         embeddings = EmbeddingsFactory.create()
         
         # Create a vector store for each knowledge base
@@ -77,7 +82,7 @@ async def generate_response(
             return
         
         # Use first vector store for now
-        retriever = vector_stores[0].as_retriever()
+        retriever = vector_stores[0].as_retriever()   # ?? 为什么只用第一个向量存储？
         
         # Initialize the language model
         llm = LLMFactory.create()
@@ -97,6 +102,7 @@ async def generate_response(
         ])
         
         # Create history aware retriever
+        # 基于聊天历史重写问题（可选增强），使用的是LangChain的功能
         history_aware_retriever = create_history_aware_retriever(
             llm, 
             retriever,
@@ -128,6 +134,7 @@ async def generate_response(
         document_prompt = PromptTemplate.from_template("\n\n- {page_content}\n\n")
 
         # Create QA chain
+        # 把检索到的文档“塞进 prompt”让 LLM 回答
         question_answer_chain = create_stuff_documents_chain(
             llm,
             qa_prompt,
@@ -136,6 +143,7 @@ async def generate_response(
         )
 
         # Create retrieval chain
+        # 创建检索链，将重写后的问题和检索到的文档一起传给 LLM 生成回答
         rag_chain = create_retrieval_chain(
             history_aware_retriever,
             question_answer_chain,
@@ -153,7 +161,7 @@ async def generate_response(
                 chat_history.append(AIMessage(content=message["content"]))
 
         full_response = ""
-        async for chunk in rag_chain.astream({
+        async for chunk in rag_chain.astream({  # 流式生成回答
             "input": query,
             "chat_history": chat_history
         }):
@@ -190,6 +198,7 @@ async def generate_response(
                 yield f'0:"{escaped_chunk}"\n'
             
         # Update bot message content
+        # 持久化bot message到数据库
         bot_message.content = full_response
         db.commit()
             

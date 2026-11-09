@@ -38,12 +38,13 @@ class TestRetrievalRequest(BaseModel):
     kb_id: int
     top_k: int
 
+# 创建知识库
 @router.post("", response_model=KnowledgeBaseResponse)
 def create_knowledge_base(
     *,
     db: Session = Depends(get_db),
     kb_in: KnowledgeBaseCreate,
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user) # 获取当前用户信息，用于关联用户和知识库
 ) -> Any:
     """
     Create new knowledge base.
@@ -55,10 +56,11 @@ def create_knowledge_base(
     )
     db.add(kb)
     db.commit()
-    db.refresh(kb)
+    db.refresh(kb) #刷新对象以获取生成的 ID
     logger.info(f"Knowledge base created: {kb.name} for user {current_user.id}")
     return kb
 
+# 获取用户所有的知识库
 @router.get("", response_model=List[KnowledgeBaseResponse])
 def get_knowledge_bases(
     db: Session = Depends(get_db),
@@ -78,6 +80,7 @@ def get_knowledge_bases(
     )
     return knowledge_bases
 
+# 获取单个指定的知识库
 @router.get("/{kb_id}", response_model=KnowledgeBaseResponse)
 def get_knowledge_base(
     *,
@@ -89,7 +92,7 @@ def get_knowledge_base(
     Get knowledge base by ID.
     """
     from sqlalchemy.orm import joinedload
-    
+    # 使用了 SQLAlchemy 的 joinedload 技术进行预加载（Eager Loading）
     kb = (
         db.query(KnowledgeBase)
         .options(
@@ -108,6 +111,7 @@ def get_knowledge_base(
     
     return kb
 
+# 更新知识库
 @router.put("/{kb_id}", response_model=KnowledgeBaseResponse)
 def update_knowledge_base(
     *,
@@ -136,6 +140,7 @@ def update_knowledge_base(
     logger.info(f"Knowledge base updated: {kb.name} for user {current_user.id}")
     return kb
 
+# 删除知识库及级联资源
 @router.delete("/{kb_id}")
 async def delete_knowledge_base(
     *,
@@ -213,6 +218,7 @@ async def delete_knowledge_base(
         raise HTTPException(status_code=500, detail=f"Failed to delete knowledge base: {str(e)}")
 
 # Batch upload documents
+# RAG上传文档的步骤：批量上传文档到 MinIO，并在MySQL中写入上传记录
 @router.post("/{kb_id}/documents/upload")
 async def upload_kb_documents(
     kb_id: int,
@@ -261,7 +267,7 @@ async def upload_kb_documents(
             minio_client = get_minio_client()
             file_size = len(file_content)  # 使用之前读取的文件内容长度
             minio_client.put_object(
-                bucket_name=settings.MINIO_BUCKET_NAME,
+                bucket_name=settings.MINIO_BUCKET_NAME, # 上传到 MinIO 的 bucket
                 object_name=temp_path,
                 data=file.file,
                 length=file_size,  # 指定文件大小
@@ -294,6 +300,7 @@ async def upload_kb_documents(
     
     return results
 
+# ===============文档分块预览功能================
 @router.post("/{kb_id}/documents/preview")
 async def preview_kb_documents(
     kb_id: int,
@@ -335,6 +342,7 @@ async def preview_kb_documents(
     
     return results
 
+# 处理传入的文档
 @router.post("/{kb_id}/documents/process")
 async def process_kb_documents(
     kb_id: int,
@@ -375,7 +383,7 @@ async def process_kb_documents(
         upload = uploads_dict.get(upload_id)
         if not upload:
             continue
-            
+        # ======创建任务的阶段：把前端传来的 upload_id 转成 ProcessingTask（状态 pending），并返回 task_id 给前端===
         task = ProcessingTask(
             document_upload_id=upload_id,
             knowledge_base_id=kb_id,
@@ -407,8 +415,8 @@ async def process_kb_documents(
                     "temp_path": upload.temp_path,
                     "file_name": upload.file_name
                 })
-    
-    background_tasks.add_task(
+    # ========调用后台任务，开始处理文档===
+    background_tasks.add_task(  # 
         add_processing_tasks_to_queue,
         task_data,
         kb_id
@@ -419,7 +427,7 @@ async def process_kb_documents(
 async def add_processing_tasks_to_queue(task_data, kb_id):
     """Helper function to add document processing tasks to the queue without blocking the main response."""
     for data in task_data:
-        asyncio.create_task(
+        asyncio.create_task( # 创建异步任务，并添加到任务队列中
             process_document_background(
                 data["temp_path"],
                 data["file_name"],
@@ -459,6 +467,7 @@ async def cleanup_temp_files(
     
     return {"message": f"Cleaned up {len(expired_uploads)} expired uploads"}
 
+# 获取处理任务状态
 @router.get("/{kb_id}/documents/tasks")
 async def get_processing_tasks(
     kb_id: int,
