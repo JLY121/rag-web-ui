@@ -154,7 +154,7 @@ export const Answer: FC<{
                 <Divider />
                 {Object.keys(citation.metadata).length > 0 && (
                   <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
-                    <div className="font-medium mb-2">Debug Info:</div>
+                    <div className="font-medium mb-2">调试信息：</div>
                     <div className="space-y-1">
                       {Object.entries(citation.metadata).map(([key, value]) => (
                         <div key={key} className="flex">

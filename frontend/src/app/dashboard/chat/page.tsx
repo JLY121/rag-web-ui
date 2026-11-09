@@ -39,7 +39,7 @@ export default function ChatPage() {
       console.error("Failed to fetch chats:", error);
       if (error instanceof ApiError) {
         toast({
-          title: "Error",
+          title: "错误",
           description: error.message,
           variant: "destructive",
         });
@@ -48,19 +48,19 @@ export default function ChatPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm("Are you sure you want to delete this chat?")) return;
+    if (!confirm("确定要删除此对话吗？")) return;
     try {
       await api.delete(`/api/chat/${id}`);
       setChats((prev) => prev.filter((chat) => chat.id !== id));
       toast({
-        title: "Success",
-        description: "Chat deleted successfully",
+        title: "成功",
+        description: "对话已成功删除",
       });
     } catch (error) {
       console.error("Failed to delete chat:", error);
       if (error instanceof ApiError) {
         toast({
-          title: "Error",
+          title: "错误",
           description: error.message,
           variant: "destructive",
         });
@@ -79,10 +79,10 @@ export default function ChatPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <div>
               <h2 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-                Your Conversations
+                我的对话
               </h2>
               <p className="text-muted-foreground mt-1">
-                Explore and manage your chat history
+                浏览和管理对话历史
               </p>
             </div>
             <Link
@@ -90,7 +90,7 @@ export default function ChatPage() {
               className="inline-flex items-center justify-center rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors duration-200 shadow-sm hover:shadow-md"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Start New Chat
+              开始新对话
             </Link>
           </div>
 
@@ -99,7 +99,7 @@ export default function ChatPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <input
                 type="text"
-                placeholder="Search conversations..."
+                placeholder="搜索对话……"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 rounded-full border bg-background/50 focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200"
@@ -125,7 +125,7 @@ export default function ChatPage() {
                         {chat.title}
                       </h3>
                       <p className="text-sm text-muted-foreground mt-1">
-                        {chat.messages.length} messages •{" "}
+                        {chat.messages.length} 条消息 •{" "}
                         {new Date(chat.created_at).toLocaleDateString()}
                       </p>
                     </div>
@@ -160,17 +160,17 @@ export default function ChatPage() {
           <div className="text-center py-16 bg-card rounded-lg border">
             <MessageSquare className="mx-auto h-12 w-12 text-muted-foreground/50" />
             <h3 className="mt-4 text-lg font-medium text-foreground">
-              No conversations yet
+              暂无对话
             </h3>
             <p className="mt-2 text-muted-foreground">
-              Start a new chat to begin exploring your knowledge base
+              开始新对话，探索您的知识库
             </p>
             <Link
               href="/dashboard/chat/new"
               className="mt-6 inline-flex items-center justify-center rounded-full bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors duration-200"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Start Your First Chat
+              开始第一次对话
             </Link>
           </div>
         )}

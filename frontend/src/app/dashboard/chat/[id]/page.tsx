@@ -139,7 +139,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
       console.error("Failed to fetch chat:", error);
       if (error instanceof ApiError) {
         toast({
-          title: "Error",
+          title: "错误",
           description: error.message,
           variant: "destructive",
         });
@@ -255,7 +255,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
                   <img
                     src="/logo.png"
                     className="h-8 w-8 rounded-full"
-                    alt="logo"
+                    alt="平台标志"
                   />
                 </div>
                 <div className="max-w-[80%] rounded-lg px-4 py-2 text-accent-foreground">
@@ -302,7 +302,7 @@ export default function ChatPage({ params }: { params: { id: string } }) {
           <input
             value={input}
             onChange={handleInputChange}
-            placeholder="Type your message..."
+            placeholder="请输入消息……"
             className="flex-1 min-w-0 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           />
           <button

@@ -24,7 +24,6 @@ from app.core.minio import get_minio_client
 from app.models.knowledge import ProcessingTask, Document, DocumentChunk
 from app.services.chunk_record import ChunkRecord
 import uuid
-from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import UnstructuredFileLoader
 from minio.error import MinioException
 from minio import Minio

@@ -7,16 +7,26 @@ import { usePathname } from "next/navigation";
 const Breadcrumb = () => {
   const pathname = usePathname();
 
+  const labels: Record<string, string> = {
+    dashboard: "控制台",
+    knowledge: "知识库",
+    chat: "对话",
+    "api-keys": "API 密钥",
+    "test-retrieval": "检索测试",
+    new: "新建",
+    upload: "上传",
+  };
+
   const generateBreadcrumbs = () => {
     const paths = pathname.split("/").filter(Boolean);
     const breadcrumbs = paths.map((path, index) => {
       const href = "/" + paths.slice(0, index + 1).join("/");
-      const label =
+      const label = labels[path] ||
         path.charAt(0).toUpperCase() + path.slice(1).replace(/-/g, " ");
       const isLast = index === paths.length - 1;
 
       // Handle dynamic routes with [id]
-      const displayLabel = path.match(/^\[.*\]$/) ? "Details" : label;
+      const displayLabel = path.match(/^\[.*\]$/) ? "详情" : label;
 
       return {
         href,

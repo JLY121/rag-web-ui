@@ -37,7 +37,7 @@ export default function NewChatPage() {
       console.error("Failed to fetch knowledge bases:", error);
       if (error instanceof ApiError) {
         toast({
-          title: "Error",
+          title: "错误",
           description: error.message,
           variant: "destructive",
         });
@@ -48,7 +48,7 @@ export default function NewChatPage() {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!selectedKB) {
-      setError("Please select a knowledge base");
+      setError("请选择一个知识库");
       return;
     }
 
@@ -67,12 +67,12 @@ export default function NewChatPage() {
       if (error instanceof ApiError) {
         setError(error.message);
         toast({
-          title: "Error",
+          title: "错误",
           description: error.message,
           variant: "destructive",
         });
       } else {
-        setError("Failed to create chat");
+        setError("对话创建失败");
       }
     } finally {
       setIsSubmitting(false);
@@ -88,18 +88,17 @@ export default function NewChatPage() {
       <DashboardLayout>
         <div className="max-w-2xl mx-auto text-center py-16">
           <h2 className="text-3xl font-bold tracking-tight mb-4">
-            No Knowledge Bases Found
+            暂无知识库
           </h2>
           <p className="text-muted-foreground mb-8">
-            You need to create at least one knowledge base before starting a
-            chat.
+            开始对话前，您需要先创建至少一个知识库。
           </p>
           <Link
             href="/dashboard/knowledge"
             className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
           >
             <Plus className="mr-2 h-4 w-4" />
-            Create Knowledge Base
+            创建知识库
           </Link>
         </div>
       </DashboardLayout>
@@ -110,9 +109,9 @@ export default function NewChatPage() {
     <DashboardLayout>
       <div className="max-w-2xl mx-auto space-y-8">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight">Start New Chat</h2>
+          <h2 className="text-3xl font-bold tracking-tight">开始新对话</h2>
           <p className="text-muted-foreground">
-            Select a knowledge base to chat with
+            选择要进行对话的知识库
           </p>
         </div>
 
@@ -122,7 +121,7 @@ export default function NewChatPage() {
               htmlFor="title"
               className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
             >
-              Chat Title
+              对话标题
             </label>
             <input
               id="title"
@@ -131,16 +130,16 @@ export default function NewChatPage() {
               type="text"
               required
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              placeholder="Enter chat title"
+              placeholder="请输入对话标题"
             />
           </div>
 
           <div className="space-y-2">
             <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Knowledge Base
+              知识库
             </label>
             <div className="text-xs text-muted-foreground">
-              Multiple selection coming soon...
+              多选功能即将推出……
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               {isLoading ? (
@@ -171,7 +170,7 @@ export default function NewChatPage() {
                         {kb.name}
                       </p>
                       <p className="text-sm text-muted-foreground line-clamp-2">
-                        {kb.description || "No description provided"}
+                        {kb.description || "暂无描述"}
                       </p>
                     </div>
                   </label>
@@ -188,14 +187,14 @@ export default function NewChatPage() {
               onClick={() => router.back()}
               className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2"
             >
-              Cancel
+              取消
             </button>
             <button
               type="submit"
               disabled={isSubmitting || !selectedKB}
               className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
             >
-              {isSubmitting ? "Creating..." : "Start Chat"}
+              {isSubmitting ? "创建中……" : "开始对话"}
             </button>
           </div>
         </form>

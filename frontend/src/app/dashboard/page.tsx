@@ -66,12 +66,10 @@ export default function DashboardPage() {
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
             <div className="space-y-4">
               <h1 className="text-4xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">
-                Knowledge Assistant
+                知识助手
               </h1>
               <p className="text-slate-600 dark:text-slate-300 max-w-xl">
-                Your personal AI-powered knowledge hub. Upload documents, create
-                knowledge bases, and get instant answers through natural
-                conversations.
+                您的个人人工智能知识中心。上传文档、创建知识库，通过自然对话即时获取答案。
               </p>
             </div>
             <a
@@ -79,7 +77,7 @@ export default function DashboardPage() {
               className="inline-flex items-center justify-center rounded-full bg-blue-600 px-6 py-3 text-sm font-medium text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-600/20"
             >
               <Plus className="mr-2 h-4 w-4" />
-              New Knowledge Base
+              新建知识库
             </a>
           </div>
         </div>
@@ -96,7 +94,7 @@ export default function DashboardPage() {
                   {stats.knowledgeBases}
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 mt-1">
-                  Knowledge Bases
+                  知识库
                 </p>
               </div>
             </div>
@@ -104,7 +102,7 @@ export default function DashboardPage() {
               href="/dashboard/knowledge"
               className="mt-6 flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
             >
-              View all knowledge bases
+              查看全部知识库
               <ArrowRight className="ml-2 h-4 w-4" />
             </a>
           </div>
@@ -119,7 +117,7 @@ export default function DashboardPage() {
                   {stats.chats}
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 mt-1">
-                  Chat Sessions
+                  对话会话
                 </p>
               </div>
             </div>
@@ -127,15 +125,15 @@ export default function DashboardPage() {
               href="/dashboard/chat"
               className="mt-6 flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium"
             >
-              View all chat sessions
+              查看全部对话
               <ArrowRight className="ml-2 h-4 w-4" />
             </a>
           </div>
         </div>
 
-        {/* Quick Actions */}
+        {/* 快捷操作 */}
         <h2 className="text-2xl font-semibold text-slate-900 dark:text-white mb-6">
-          Quick Actions
+          快捷操作
         </h2>
         <div className="grid gap-6 md:grid-cols-3 mb-12">
           <a
@@ -146,10 +144,10 @@ export default function DashboardPage() {
               <Brain className="h-8 w-8 text-blue-600 dark:text-blue-400" />
             </div>
             <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-              Create Knowledge Base
+              创建知识库
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-              Build a new AI-powered knowledge repository
+              构建新的人工智能知识库
             </p>
           </a>
 
@@ -161,10 +159,10 @@ export default function DashboardPage() {
               <Upload className="h-8 w-8 text-indigo-600 dark:text-indigo-400" />
             </div>
             <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-              Upload Documents
+              上传文档
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-              Add PDF, DOCX, MD or TXT files to your knowledge bases
+              将 PDF、DOCX、MD 或 TXT 文件添加到知识库
             </p>
           </a>
 
@@ -176,10 +174,10 @@ export default function DashboardPage() {
               <Sparkles className="h-8 w-8 text-purple-600 dark:text-purple-400" />
             </div>
             <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
-              Start Chatting
+              开始对话
             </h3>
             <p className="text-sm text-slate-500 dark:text-slate-400 text-center">
-              Get instant answers from your knowledge with AI
+              使用人工智能从知识库中即时获取答案
             </p>
           </a>
         </div>
@@ -188,7 +186,7 @@ export default function DashboardPage() {
         <div className="rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-8 shadow-sm">
           <h2 className="text-2xl font-semibold text-slate-900 dark:text-white mb-6 flex items-center">
             <Search className="mr-3 h-5 w-5 text-blue-600 dark:text-blue-400" />
-            How It Works
+            使用指南
           </h2>
           <div className="space-y-6">
             <div className="flex items-start gap-6 p-6 rounded-xl bg-slate-50 dark:bg-slate-700/30">
@@ -197,18 +195,16 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h3 className="font-medium text-lg text-slate-900 dark:text-white mb-2">
-                  Create a Knowledge Base
+                  创建知识库
                 </h3>
                 <p className="text-slate-600 dark:text-slate-300">
-                  Start by creating a new knowledge base to organize your
-                  information. Give it a name and description that helps you
-                  identify its purpose.
+                  首先创建一个知识库来整理信息，并为其设置名称和描述，方便识别用途。
                 </p>
                 <a
                   href="/dashboard/knowledge/new"
                   className="mt-4 inline-flex items-center text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-sm font-medium"
                 >
-                  Create now
+                  立即创建
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </a>
               </div>
@@ -220,17 +216,16 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h3 className="font-medium text-lg text-slate-900 dark:text-white mb-2">
-                  Upload Your Documents
+                  上传文档
                 </h3>
                 <p className="text-slate-600 dark:text-slate-300">
-                  Upload PDF, DOCX, MD or TXT files to your knowledge base. Our
-                  system will process and index them for AI-powered retrieval.
+                  将 PDF、DOCX、MD 或 TXT 文件上传到知识库，系统会处理并建立索引，以支持人工智能检索。
                 </p>
                 <a
                   href="/dashboard/knowledge"
                   className="mt-4 inline-flex items-center text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 text-sm font-medium"
                 >
-                  Upload documents
+                  上传文档
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </a>
               </div>
@@ -242,18 +237,16 @@ export default function DashboardPage() {
               </div>
               <div>
                 <h3 className="font-medium text-lg text-slate-900 dark:text-white mb-2">
-                  Chat With Your Knowledge
+                  与知识库对话
                 </h3>
                 <p className="text-slate-600 dark:text-slate-300">
-                  Start a conversation with your knowledge base. Ask questions
-                  in natural language and get accurate answers based on your
-                  documents.
+                  开始与知识库对话，用自然语言提问，获取基于文档的准确答案。
                 </p>
                 <a
                   href="/dashboard/chat/new"
                   className="mt-4 inline-flex items-center text-purple-600 dark:text-purple-400 hover:text-purple-700 dark:hover:text-purple-300 text-sm font-medium"
                 >
-                  Start chatting
+                  开始对话
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </a>
               </div>

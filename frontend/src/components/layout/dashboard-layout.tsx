@@ -28,9 +28,9 @@ export default function DashboardLayout({
   };
 
   const navigation = [
-    { name: "Knowledge Base", href: "/dashboard/knowledge", icon: Book },
-    { name: "Chat", href: "/dashboard/chat", icon: MessageSquare },
-    { name: "API Keys", href: "/dashboard/api-keys", icon: User },
+    { name: "知识库", href: "/dashboard/knowledge", icon: Book },
+    { name: "对话", href: "/dashboard/chat", icon: MessageSquare },
+    { name: "API 密钥", href: "/dashboard/api-keys", icon: User },
   ];
 
   return (
@@ -60,10 +60,10 @@ export default function DashboardLayout({
             >
               <img
                 src="/logo.svg"
-                alt="Logo"
+                alt="平台标志"
                 className="w-16 h-16 rounded-lg"
               />
-              RAG Web UI
+              知识库管理问答平台
             </Link>
           </div>
 
@@ -103,7 +103,7 @@ export default function DashboardLayout({
               className="flex w-full items-center rounded-lg px-3 py-2.5 text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors duration-200"
             >
               <LogOut className="mr-3 h-4 w-4" />
-              Sign out
+              退出登录
             </button>
           </div>
         </div>
@@ -124,17 +124,17 @@ export const dashboardConfig = {
   mainNav: [],
   sidebarNav: [
     {
-      title: "Knowledge Base",
+      title: "知识库",
       href: "/dashboard/knowledge",
       icon: "database",
     },
     {
-      title: "Chat",
+      title: "对话",
       href: "/dashboard/chat",
       icon: "messageSquare",
     },
     {
-      title: "API Keys",
+      title: "API 密钥",
       href: "/dashboard/api-keys",
       icon: "key",
     },
